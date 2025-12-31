@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Globe, 
@@ -7,9 +6,12 @@ import {
   ShieldCheck, 
   ChevronRight,
   Zap,
-  LayoutDashboard
+  CreditCard,
+  ArrowUpRight,
+  TrendingUp,
+  LayoutGrid
 } from 'lucide-react';
-import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, Tooltip, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { Transaction } from '../types';
 import { ChartContainer } from './ui/chart';
 
@@ -19,146 +21,188 @@ interface DashboardProps {
   onScanClick: () => void;
 }
 
-const data = [
-  { name: 'Mon', val: 4000 },
-  { name: 'Tue', val: 3000 },
-  { name: 'Wed', val: 2000 },
-  { name: 'Thu', val: 2780 },
-  { name: 'Fri', val: 1890 },
-  { name: 'Sat', val: 2390 },
-  { name: 'Sun', val: 3490 },
+const chartData = [
+  { name: 'M', val: 4000 },
+  { name: 'T', val: 3000 },
+  { name: 'W', val: 5000 },
+  { name: 'T', val: 2780 },
+  { name: 'F', val: 6890 },
+  { name: 'S', val: 2390 },
+  { name: 'S', val: 7490 },
 ];
 
 export const Dashboard: React.FC<DashboardProps> = ({ balance, transactions, onScanClick }) => {
   return (
-    <div className="flex flex-col gap-5 p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-sky-500/20 flex items-center justify-center border border-sky-500/30">
-            <LayoutDashboard size={18} className="text-sky-400" />
+    <div className="flex flex-col gap-8 p-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
+      {/* Navbar */}
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
+            <LayoutGrid size={20} className="text-white" />
           </div>
-          <h1 className="text-lg font-semibold tracking-tight">Main Terminal</h1>
+          <div>
+            <h1 className="text-lg font-bold tracking-tight text-white leading-tight">Orchestrator</h1>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Universal Node</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          <span className="text-[10px] uppercase tracking-widest text-emerald-400 font-mono">Live Core Connectivity</span>
+        <div className="flex items-center gap-2 bg-emerald-500/5 px-3 py-1.5 rounded-full border border-emerald-500/20">
+          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span className="text-[9px] uppercase tracking-widest text-emerald-400 font-mono font-bold">BaaS Online</span>
         </div>
       </div>
 
-      {/* Balance Card - The Hero */}
-      <div className="glass rounded-[2rem] p-8 flex flex-col items-center justify-center relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-4">
-          <Zap size={20} className="text-violet-500/50 group-hover:text-violet-400 transition-colors" />
+      {/* Hero Balance Card */}
+      <div className="relative group perspective-1000">
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-indigo-600 rounded-[2.5rem] opacity-20 blur-xl group-hover:opacity-30 transition-opacity duration-500"></div>
+        <div className="relative glass rounded-[2.5rem] p-8 overflow-hidden">
+          {/* Subtle patterns */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 rounded-full blur-[100px] -mr-32 -mt-32"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-[80px] -ml-24 -mb-24"></div>
+
+          <div className="flex justify-between items-start mb-10">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-[0.15em]">Settlement Balance</p>
+              <h2 className="text-5xl font-extrabold tracking-tighter text-white drop-shadow-sm">
+                ₹{balance.toLocaleString('en-IN')}
+              </h2>
+            </div>
+            <div className="p-3 glass rounded-2xl">
+              <Zap size={22} className="text-sky-400" />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-4">
+              <div className="flex -space-x-2">
+                 {[1,2,3].map(i => (
+                   <div key={i} className="w-7 h-7 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-bold">
+                     {String.fromCharCode(64 + i)}
+                   </div>
+                 ))}
+                 <div className="w-7 h-7 rounded-full border-2 border-slate-900 bg-sky-500/20 flex items-center justify-center text-[8px] font-bold text-sky-400">
+                   +4
+                 </div>
+              </div>
+              <p className="text-[10px] text-slate-400 font-medium">Active Bridge Nodes</p>
+            </div>
+
+            <button 
+              onClick={onScanClick}
+              className="btn-premium w-full py-4 bg-white text-slate-950 font-extrabold rounded-2xl flex items-center justify-center gap-3 text-sm tracking-tight"
+            >
+              <Plus size={20} />
+              Scan Payment QR
+            </button>
+          </div>
         </div>
-        <p className="text-xs uppercase tracking-[0.2em] text-slate-400 mb-2">Available Settle Balance</p>
-        <h2 className="text-4xl font-bold tracking-tighter text-white">
-          ₹{balance.toLocaleString('en-IN')}
-        </h2>
-        <div className="mt-6 flex gap-3">
-          <button 
-            onClick={onScanClick}
-            className="px-6 py-2.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold rounded-full flex items-center gap-2 transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(56,189,248,0.3)]"
-          >
-            <Plus size={18} />
-            Scan Global QR
-          </button>
-        </div>
-        {/* Decorative background element */}
-        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
       </div>
 
-      {/* Bento Grid */}
+      {/* Grid Stats */}
       <div className="grid grid-cols-2 gap-4">
-        {/* FX Benchmarks */}
-        <div className="glass rounded-2xl p-4 flex flex-col gap-3">
-          <div className="flex items-center gap-2 text-sky-400">
-            <Globe size={16} />
-            <span className="text-[10px] font-bold uppercase tracking-wider">FX Benchmarks</span>
+        <div className="glass-dark rounded-[1.5rem] p-5 flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-sky-500/10 rounded-lg">
+              <TrendingUp size={14} className="text-sky-400" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Market</span>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-xs text-slate-400">USD</span>
-              <span className="text-xs font-mono font-medium">89.96</span>
+              <span className="text-[11px] font-semibold text-slate-500">USD/INR</span>
+              <span className="text-[11px] font-mono text-white">89.96</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs text-slate-400">EUR</span>
-              <span className="text-xs font-mono font-medium">105.0</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-slate-400">GBP</span>
-              <span className="text-xs font-mono font-medium">121.0</span>
+              <span className="text-[11px] font-semibold text-slate-500">EUR/INR</span>
+              <span className="text-[11px] font-mono text-white">105.0</span>
             </div>
           </div>
         </div>
 
-        {/* Security Status */}
-        <div className="glass rounded-2xl p-4 flex flex-col gap-3">
-          <div className="flex items-center gap-2 text-violet-400">
-            <ShieldCheck size={16} />
-            <span className="text-[10px] font-bold uppercase tracking-wider">BaaS Bridge</span>
-          </div>
-          <div className="text-xs leading-relaxed text-slate-300">
-            Universal routing active via Sponsor Nodes. 
-            <span className="block text-[10px] mt-1 text-slate-500">ISO-20022 ready</span>
-          </div>
-        </div>
-
-        {/* Analytics Card */}
-        <div className="col-span-2 glass rounded-2xl p-4">
-          <div className="flex justify-between items-center mb-4">
-             <div className="flex items-center gap-2 text-sky-400">
-              <Clock size={16} />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Volume Dynamics</span>
+        <div className="glass-dark rounded-[1.5rem] p-5 flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-indigo-500/10 rounded-lg">
+              <ShieldCheck size={14} className="text-indigo-400" />
             </div>
-            <span className="text-[10px] text-slate-500 font-mono tracking-tighter">7 DAY OVERVIEW</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Compliance</span>
           </div>
-          
-          {/* SYSTEM BUILD INSTRUCTION: CHART ENGINE STABILITY */}
-          
-          <ChartContainer>
-            <ResponsiveContainer width="100%" aspect={1.8}>
-              <AreaChart data={data}>
-                <defs>
-                  <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <Area type="monotone" dataKey="val" stroke="#38bdf8" fillOpacity={1} fill="url(#colorVal)" strokeWidth={2} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px' }}
-                  itemStyle={{ color: '#f8fafc' }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+          <p className="text-[11px] text-slate-300 font-medium leading-tight">
+            ISO-20022 Handshake Ready. Bridge verified.
+          </p>
         </div>
       </div>
 
-      {/* Recent Transactions */}
-      <div className="flex flex-col gap-3 mt-2 pb-10">
+      {/* Volume Chart */}
+      <div className="glass-dark rounded-[2rem] p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-2">
+            <Clock size={16} className="text-slate-500" />
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Activity Velocity</h3>
+          </div>
+          <div className="flex items-center gap-1 text-emerald-400">
+             <ArrowUpRight size={12} />
+             <span className="text-[10px] font-bold">+12.4%</span>
+          </div>
+        </div>
+        
+        <ChartContainer>
+          <ResponsiveContainer width="100%" height={140}>
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="gradientArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <Area 
+                type="monotone" 
+                dataKey="val" 
+                stroke="#38bdf8" 
+                strokeWidth={3}
+                fill="url(#gradientArea)" 
+                animationDuration={1500}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(2, 6, 23, 0.8)', 
+                  border: '1px solid rgba(255,255,255,0.1)', 
+                  borderRadius: '12px',
+                  backdropFilter: 'blur(10px)',
+                  fontSize: '10px'
+                }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+      </div>
+
+      {/* Transactions */}
+      <div className="flex flex-col gap-4 pb-12">
         <div className="flex justify-between items-center">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Global Ledger</h3>
-          <button className="text-[10px] text-sky-400 flex items-center gap-1 font-semibold uppercase tracking-wider">
-            View All <ChevronRight size={10} />
+          <h3 className="text-xs font-extrabold uppercase tracking-[0.2em] text-slate-500">Node Ledger</h3>
+          <button className="text-[10px] font-bold text-sky-400 flex items-center gap-1 hover:opacity-80 transition-opacity">
+            HISTORY <ChevronRight size={12} />
           </button>
         </div>
-        <div className="flex flex-col gap-2">
+        
+        <div className="space-y-3">
           {transactions.map((tx) => (
-            <div key={tx.id} className="glass rounded-xl p-4 flex items-center justify-between group hover:border-white/20 transition-all cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700">
-                  <Globe size={20} />
+            <div key={tx.id} className="glass-dark hover:glass rounded-2xl p-4 flex items-center justify-between transition-all duration-300 cursor-pointer group border-transparent hover:border-white/10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-sky-500/10 group-hover:text-sky-400 transition-colors">
+                  <Globe size={22} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white group-hover:text-sky-300 transition-colors">{tx.merchant}</p>
-                  <p className="text-[10px] text-slate-500 font-mono">{tx.date}</p>
+                  <p className="text-sm font-bold text-white group-hover:text-sky-300 transition-colors">{tx.merchant}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-slate-500 font-mono">{tx.date}</span>
+                    <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+                    <span className="text-[10px] text-sky-500/80 font-bold uppercase">{tx.currency}</span>
+                  </div>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold text-white">-₹{tx.inrValue.toFixed(2)}</p>
-                <p className="text-[10px] text-slate-400 font-mono">{tx.currency} {tx.amount.toFixed(2)}</p>
+                <p className="text-sm font-bold text-white tracking-tight">-₹{tx.inrValue.toFixed(2)}</p>
+                <p className="text-[10px] text-slate-500 font-mono mt-0.5">{tx.currency} {tx.amount.toFixed(2)}</p>
               </div>
             </div>
           ))}

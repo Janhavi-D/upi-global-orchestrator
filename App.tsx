@@ -9,6 +9,53 @@ import { SuccessReceipt } from './components/SuccessReceipt';
 import { parseReceipt } from './geminiService';
 import { INITIAL_BALANCE, BRIDGE_FEE_PCT, GST_ON_FEE_PCT } from './constants';
 
+/**
+ * Aggressive client-side compression to minimize network delay.
+ * 1000px max dimension provides ideal balance of speed and OCR accuracy.
+ */
+const compressImage = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_DIM = 1000; // Reduced from 1200 for faster uploads
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height *= MAX_DIM / width;
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width *= MAX_DIM / height;
+            height = MAX_DIM;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject("Canvas context failure");
+        
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+        // 0.6 quality is optimal for Gemini Flash OCR while keeping file size minimal
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        resolve(dataUrl.split(',')[1]);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+};
+
 const App: React.FC = () => {
   const [mode, setMode] = useState<AppMode>(AppMode.DASHBOARD);
   const [balance, setBalance] = useState(INITIAL_BALANCE);
@@ -38,31 +85,17 @@ const App: React.FC = () => {
   const handleScan = async (file: File) => {
     setIsScanning(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(',')[1];
-        const data = await parseReceipt(base64);
-        setCurrentPayment(data);
-        setMode(AppMode.PAYMENT_PREVIEW);
-        setIsScanning(false);
-      };
-      reader.readAsDataURL(file);
+      const optimizedBase64 = await compressImage(file);
+      const data = await parseReceipt(optimizedBase64);
+      
+      setCurrentPayment(data);
+      setMode(AppMode.PAYMENT_PREVIEW);
+      setIsScanning(false);
     } catch (err) {
       console.error("Scan error", err);
       setIsScanning(false);
-      // Fallback mockup if API fails for demo
-      const mock: PaymentData = {
-        merchantName: "Global Merchant",
-        country: "UAE",
-        originalCurrency: "AED",
-        originalAmount: 150.00,
-        subtotal: 150.00,
-        tax: 0,
-        inrAmount: 3675.00,
-        isNIPL: true
-      };
-      setCurrentPayment(mock);
-      setMode(AppMode.PAYMENT_PREVIEW);
+      // Fail gracefully to dashboard or error state
+      setMode(AppMode.DASHBOARD);
     }
   };
 

@@ -9,10 +9,6 @@ import { SuccessReceipt } from './components/SuccessReceipt';
 import { parseReceipt } from './geminiService';
 import { INITIAL_BALANCE, BRIDGE_FEE_PCT, GST_ON_FEE_PCT } from './constants';
 
-/**
- * Aggressive client-side compression to minimize network delay.
- * 1000px max dimension provides ideal balance of speed and OCR accuracy.
- */
 const compressImage = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -22,7 +18,7 @@ const compressImage = (file: File): Promise<string> => {
       img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_DIM = 1000; // Reduced from 1200 for faster uploads
+        const MAX_DIM = 1200; // Slightly higher quality for Gemini 3
         let width = img.width;
         let height = img.height;
 
@@ -46,19 +42,19 @@ const compressImage = (file: File): Promise<string> => {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
-        // 0.6 quality is optimal for Gemini Flash OCR while keeping file size minimal
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
         resolve(dataUrl.split(',')[1]);
       };
-      img.onerror = reject;
+      img.onerror = () => reject("Image loading failed");
     };
-    reader.onerror = reject;
+    reader.onerror = () => reject("File reading failed");
   });
 };
 
 const App: React.FC = () => {
   const [mode, setMode] = useState<AppMode>(AppMode.DASHBOARD);
   const [balance, setBalance] = useState(INITIAL_BALANCE);
+  const [scanError, setScanError] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([
     {
       id: '1',
@@ -84,18 +80,20 @@ const App: React.FC = () => {
 
   const handleScan = async (file: File) => {
     setIsScanning(true);
+    setScanError(null);
     try {
       const optimizedBase64 = await compressImage(file);
       const data = await parseReceipt(optimizedBase64);
       
+      // Only proceed if scanning was successful
       setCurrentPayment(data);
       setMode(AppMode.PAYMENT_PREVIEW);
+    } catch (err: any) {
+      console.error("Scan error encountered:", err);
+      // Ensure we stay in SCAN mode but show the error
+      setScanError(err.message || "An unexpected error occurred during analysis.");
+    } finally {
       setIsScanning(false);
-    } catch (err) {
-      console.error("Scan error", err);
-      setIsScanning(false);
-      // Fail gracefully to dashboard or error state
-      setMode(AppMode.DASHBOARD);
     }
   };
 
@@ -122,6 +120,12 @@ const App: React.FC = () => {
     setMode(AppMode.SUCCESS);
   }, [currentPayment]);
 
+  const resetToDashboard = () => {
+    setScanError(null);
+    setCurrentPayment(null);
+    setMode(AppMode.DASHBOARD);
+  };
+
   return (
     <div className="min-h-screen flex justify-center bg-[#020617]">
       <div className="w-full max-w-md bg-[#020617] relative shadow-2xl overflow-x-hidden min-h-screen">
@@ -136,8 +140,9 @@ const App: React.FC = () => {
         {mode === AppMode.SCAN && (
           <Scanner 
             onScan={handleScan} 
-            onCancel={() => setMode(AppMode.DASHBOARD)} 
+            onCancel={resetToDashboard} 
             isLoading={isScanning}
+            error={scanError}
           />
         )}
 
@@ -145,7 +150,7 @@ const App: React.FC = () => {
           <PaymentPreview 
             data={currentPayment} 
             onProceed={() => setMode(AppMode.BAAS_TERMINAL)}
-            onCancel={() => setMode(AppMode.DASHBOARD)}
+            onCancel={resetToDashboard}
           />
         )}
 
@@ -159,7 +164,7 @@ const App: React.FC = () => {
         {mode === AppMode.SUCCESS && currentPayment && (
           <SuccessReceipt 
             data={currentPayment} 
-            onDone={() => setMode(AppMode.DASHBOARD)} 
+            onDone={resetToDashboard} 
           />
         )}
       </div>

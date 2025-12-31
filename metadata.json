@@ -1,0 +1,7 @@
+{
+  "name": "UPI Global Orchestrator",
+  "description": "Premium multi-currency UPI payment platform with stealth ultra-dark theme and BaaS bridging for universal global payments.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
